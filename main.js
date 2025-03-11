@@ -35,9 +35,9 @@ let timeAccumulator = 0;
 let simulationYears = 0;   // measured in years, each tick adds 1/52
 
 // Grid configuration
-const cols = 70;
+const cols = 50;
 const rows = 30;
-const cellSize = 15;
+const cellSize = 25;
 let grid = [];
 
 // For Chart.js
