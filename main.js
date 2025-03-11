@@ -1,20 +1,22 @@
 import p5 from "p5";
 import Chart from "chart.js/auto";
-import acornImg from "./icons/acorn.png";  
-import waterImg         from "./icons/water.png";
-import dirtImg          from "./icons/dirt.png";
-import rockImg          from "./icons/rock.png";
-import grassImg         from "./icons/grass.png";
-import saplingImg       from "./icons/sapling.png";
-import treeImg          from "./icons/tree.png";
-import deadTreeImg      from "./icons/dead-tree.png";
-import flowerSeedImg    from "./icons/flower-seed.png";
-import meadowImg        from "./icons/meadow.png";
-import beeImg           from "./icons/bee.png";
-import treeVineImg      from "./icons/tree-vine.png";
-import deadTreeVineImg  from "./icons/dead-tree-vine.png";
-import meadowVineImg    from "./icons/meadow-vine.png";
-import fireImg          from "./icons/fire.png";
+
+// Remove module imports for images and use string paths instead:
+const acornImg          = "./icons/acorn.png";
+const waterImg          = "./icons/water.png";
+const dirtImg           = "./icons/dirt.png";
+const rockImg           = "./icons/rock.png";
+const grassImg          = "./icons/grass.png";
+const saplingImg        = "./icons/sapling.png";
+const treeImg           = "./icons/tree.png";
+const deadTreeImg       = "./icons/dead-tree.png";
+const flowerSeedImg     = "./icons/flower-seed.png";
+const meadowImg         = "./icons/meadow.png";
+const beeImg            = "./icons/bee.png";
+const treeVineImg       = "./icons/tree-vine.png";
+const deadTreeVineImg   = "./icons/dead-tree-vine.png";
+const meadowVineImg     = "./icons/meadow-vine.png";
+const fireImg           = "./icons/fire.png";
 
 // Define cell types
 const WATER = "water";
@@ -139,7 +141,7 @@ const sketch = (p) => {
     grassIcon      = p.loadImage(grassImg);
     treeSeedIcon   = p.loadImage(acornImg);
     saplingIcon    = p.loadImage(saplingImg);
-    treeIcon       = p.loadImage(treeImg);
+treeIcon       = p.loadImage(treeImg);
     deadTreeIcon   = p.loadImage(deadTreeImg);
     flowerSeedIcon = p.loadImage(flowerSeedImg);
     meadowIcon     = p.loadImage(meadowImg);

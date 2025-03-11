@@ -601,36 +601,22 @@ var _p5 = require("p5");
 var _p5Default = parcelHelpers.interopDefault(_p5);
 var _auto = require("chart.js/auto");
 var _autoDefault = parcelHelpers.interopDefault(_auto);
-var _acornPng = require("./icons/acorn.png");
-var _acornPngDefault = parcelHelpers.interopDefault(_acornPng);
-var _waterPng = require("./icons/water.png");
-var _waterPngDefault = parcelHelpers.interopDefault(_waterPng);
-var _dirtPng = require("./icons/dirt.png");
-var _dirtPngDefault = parcelHelpers.interopDefault(_dirtPng);
-var _rockPng = require("./icons/rock.png");
-var _rockPngDefault = parcelHelpers.interopDefault(_rockPng);
-var _grassPng = require("./icons/grass.png");
-var _grassPngDefault = parcelHelpers.interopDefault(_grassPng);
-var _saplingPng = require("./icons/sapling.png");
-var _saplingPngDefault = parcelHelpers.interopDefault(_saplingPng);
-var _treePng = require("./icons/tree.png");
-var _treePngDefault = parcelHelpers.interopDefault(_treePng);
-var _deadTreePng = require("./icons/dead-tree.png");
-var _deadTreePngDefault = parcelHelpers.interopDefault(_deadTreePng);
-var _flowerSeedPng = require("./icons/flower-seed.png");
-var _flowerSeedPngDefault = parcelHelpers.interopDefault(_flowerSeedPng);
-var _meadowPng = require("./icons/meadow.png");
-var _meadowPngDefault = parcelHelpers.interopDefault(_meadowPng);
-var _beePng = require("./icons/bee.png");
-var _beePngDefault = parcelHelpers.interopDefault(_beePng);
-var _treeVinePng = require("./icons/tree-vine.png");
-var _treeVinePngDefault = parcelHelpers.interopDefault(_treeVinePng);
-var _deadTreeVinePng = require("./icons/dead-tree-vine.png");
-var _deadTreeVinePngDefault = parcelHelpers.interopDefault(_deadTreeVinePng);
-var _meadowVinePng = require("./icons/meadow-vine.png");
-var _meadowVinePngDefault = parcelHelpers.interopDefault(_meadowVinePng);
-var _firePng = require("./icons/fire.png");
-var _firePngDefault = parcelHelpers.interopDefault(_firePng);
+// Remove module imports for images and use string paths instead:
+const acornImg = "./icons/acorn.png";
+const waterImg = "./icons/water.png";
+const dirtImg = "./icons/dirt.png";
+const rockImg = "./icons/rock.png";
+const grassImg = "./icons/grass.png";
+const saplingImg = "./icons/sapling.png";
+const treeImg = "./icons/tree.png";
+const deadTreeImg = "./icons/dead-tree.png";
+const flowerSeedImg = "./icons/flower-seed.png";
+const meadowImg = "./icons/meadow.png";
+const beeImg = "./icons/bee.png";
+const treeVineImg = "./icons/tree-vine.png";
+const deadTreeVineImg = "./icons/dead-tree-vine.png";
+const meadowVineImg = "./icons/meadow-vine.png";
+const fireImg = "./icons/fire.png";
 // Define cell types
 const WATER = "water";
 const DIRT = "dirt";
@@ -729,21 +715,21 @@ const sketch = (p)=>{
     let treeSeedIcon, saplingIcon, treeIcon, deadTreeIcon, flowerSeedIcon, meadowIcon;
     let treeVineIcon, deadTreeVineIcon, meadowVineIcon, fireIcon;
     p.preload = ()=>{
-        waterIcon = p.loadImage((0, _waterPngDefault.default));
-        dirtIcon = p.loadImage((0, _dirtPngDefault.default));
-        rockIcon = p.loadImage((0, _rockPngDefault.default));
-        grassIcon = p.loadImage((0, _grassPngDefault.default));
-        treeSeedIcon = p.loadImage((0, _acornPngDefault.default));
-        saplingIcon = p.loadImage((0, _saplingPngDefault.default));
-        treeIcon = p.loadImage((0, _treePngDefault.default));
-        deadTreeIcon = p.loadImage((0, _deadTreePngDefault.default));
-        flowerSeedIcon = p.loadImage((0, _flowerSeedPngDefault.default));
-        meadowIcon = p.loadImage((0, _meadowPngDefault.default));
-        beeIcon = p.loadImage((0, _beePngDefault.default));
-        treeVineIcon = p.loadImage((0, _treeVinePngDefault.default));
-        deadTreeVineIcon = p.loadImage((0, _deadTreeVinePngDefault.default));
-        meadowVineIcon = p.loadImage((0, _meadowVinePngDefault.default));
-        fireIcon = p.loadImage((0, _firePngDefault.default));
+        waterIcon = p.loadImage(waterImg);
+        dirtIcon = p.loadImage(dirtImg);
+        rockIcon = p.loadImage(rockImg);
+        grassIcon = p.loadImage(grassImg);
+        treeSeedIcon = p.loadImage(acornImg);
+        saplingIcon = p.loadImage(saplingImg);
+        treeIcon = p.loadImage(treeImg);
+        deadTreeIcon = p.loadImage(deadTreeImg);
+        flowerSeedIcon = p.loadImage(flowerSeedImg);
+        meadowIcon = p.loadImage(meadowImg);
+        beeIcon = p.loadImage(beeImg);
+        treeVineIcon = p.loadImage(treeVineImg);
+        deadTreeVineIcon = p.loadImage(deadTreeVineImg);
+        meadowVineIcon = p.loadImage(meadowVineImg);
+        fireIcon = p.loadImage(fireImg);
     };
     p.setup = ()=>{
         pInstance = p;
@@ -1621,7 +1607,7 @@ window.restartSimulation = ()=>{
     averageAgeChart.update();
 };
 
-},{"p5":"7Uk5U","chart.js/auto":"d8NN9","./icons/acorn.png":"8DcGY","./icons/water.png":"cHpyd","./icons/dirt.png":"6jRS3","./icons/rock.png":"1GjxS","./icons/grass.png":"4tWe1","./icons/sapling.png":"4MRTG","./icons/tree.png":"92U5z","./icons/dead-tree.png":"aLljn","./icons/flower-seed.png":"5q00m","./icons/meadow.png":"kXLmL","./icons/bee.png":"1NYvv","./icons/tree-vine.png":"2I15k","./icons/dead-tree-vine.png":"c6GZl","./icons/meadow-vine.png":"ad2kO","./icons/fire.png":"c5SqS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7Uk5U":[function(require,module,exports,__globalThis) {
+},{"p5":"7Uk5U","chart.js/auto":"d8NN9","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7Uk5U":[function(require,module,exports,__globalThis) {
 /*! p5.js v1.11.3 January 22, 2025 */ var global = arguments[3];
 !function(e1) {
     module.exports = e1();
@@ -47692,86 +47678,6 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"8DcGY":[function(require,module,exports,__globalThis) {
-module.exports = require("c0b7049c2efaa9b8").getBundleURL('3gKDs') + "acorn.32d8dbf9.png" + "?" + Date.now();
-
-},{"c0b7049c2efaa9b8":"lgJ39"}],"lgJ39":[function(require,module,exports,__globalThis) {
-"use strict";
-var bundleURL = {};
-function getBundleURLCached(id) {
-    var value = bundleURL[id];
-    if (!value) {
-        value = getBundleURL();
-        bundleURL[id] = value;
-    }
-    return value;
-}
-function getBundleURL() {
-    try {
-        throw new Error();
-    } catch (err) {
-        var matches = ('' + err.stack).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^)\n]+/g);
-        if (matches) // The first two stack frames will be this function and getBundleURLCached.
-        // Use the 3rd one, which will be a runtime in the original bundle.
-        return getBaseURL(matches[2]);
-    }
-    return '/';
-}
-function getBaseURL(url) {
-    return ('' + url).replace(/^((?:https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-// TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
-function getOrigin(url) {
-    var matches = ('' + url).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^/]+/);
-    if (!matches) throw new Error('Origin not found');
-    return matches[0];
-}
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-exports.getOrigin = getOrigin;
-
-},{}],"cHpyd":[function(require,module,exports,__globalThis) {
-module.exports = require("7cb6d3500a8d99a5").getBundleURL('3gKDs') + "water.1e63d865.png" + "?" + Date.now();
-
-},{"7cb6d3500a8d99a5":"lgJ39"}],"6jRS3":[function(require,module,exports,__globalThis) {
-module.exports = require("2b7792dfcc1744f").getBundleURL('3gKDs') + "dirt.7d232fc3.png" + "?" + Date.now();
-
-},{"2b7792dfcc1744f":"lgJ39"}],"1GjxS":[function(require,module,exports,__globalThis) {
-module.exports = require("2cf62ac3628815f7").getBundleURL('3gKDs') + "rock.d5e192ed.png" + "?" + Date.now();
-
-},{"2cf62ac3628815f7":"lgJ39"}],"4tWe1":[function(require,module,exports,__globalThis) {
-module.exports = require("b7f6b252a5b01c1e").getBundleURL('3gKDs') + "grass.44ff3d13.png" + "?" + Date.now();
-
-},{"b7f6b252a5b01c1e":"lgJ39"}],"4MRTG":[function(require,module,exports,__globalThis) {
-module.exports = require("8d6f96ed49f5c8d2").getBundleURL('3gKDs') + "sapling.11da8360.png" + "?" + Date.now();
-
-},{"8d6f96ed49f5c8d2":"lgJ39"}],"92U5z":[function(require,module,exports,__globalThis) {
-module.exports = require("8d02efb5bbe262d6").getBundleURL('3gKDs') + "tree.cb184b93.png" + "?" + Date.now();
-
-},{"8d02efb5bbe262d6":"lgJ39"}],"aLljn":[function(require,module,exports,__globalThis) {
-module.exports = require("8347a17b29363ee7").getBundleURL('3gKDs') + "dead-tree.d8be795d.png" + "?" + Date.now();
-
-},{"8347a17b29363ee7":"lgJ39"}],"5q00m":[function(require,module,exports,__globalThis) {
-module.exports = require("e26406b89a6c057").getBundleURL('3gKDs') + "flower-seed.7f6a1ca4.png" + "?" + Date.now();
-
-},{"e26406b89a6c057":"lgJ39"}],"kXLmL":[function(require,module,exports,__globalThis) {
-module.exports = require("274c435ba64b8d3c").getBundleURL('3gKDs') + "meadow.52c2127a.png" + "?" + Date.now();
-
-},{"274c435ba64b8d3c":"lgJ39"}],"1NYvv":[function(require,module,exports,__globalThis) {
-module.exports = require("4d11099a4867d2ee").getBundleURL('3gKDs') + "bee.aebeeef4.png" + "?" + Date.now();
-
-},{"4d11099a4867d2ee":"lgJ39"}],"2I15k":[function(require,module,exports,__globalThis) {
-module.exports = require("e2de07f0b4a58b34").getBundleURL('3gKDs') + "tree-vine.8886a8bd.png" + "?" + Date.now();
-
-},{"e2de07f0b4a58b34":"lgJ39"}],"c6GZl":[function(require,module,exports,__globalThis) {
-module.exports = require("ad94e3ea4ce51e38").getBundleURL('3gKDs') + "dead-tree-vine.99e33368.png" + "?" + Date.now();
-
-},{"ad94e3ea4ce51e38":"lgJ39"}],"ad2kO":[function(require,module,exports,__globalThis) {
-module.exports = require("1bc499594538457d").getBundleURL('3gKDs') + "meadow-vine.a7af1302.png" + "?" + Date.now();
-
-},{"1bc499594538457d":"lgJ39"}],"c5SqS":[function(require,module,exports,__globalThis) {
-module.exports = require("cbca7a2efab34c53").getBundleURL('3gKDs') + "fire.b722021f.png" + "?" + Date.now();
-
-},{"cbca7a2efab34c53":"lgJ39"}]},["2glVN","adjPd"], "adjPd", "parcelRequire94c2")
+},{}]},["2glVN","adjPd"], "adjPd", "parcelRequire94c2")
 
 //# sourceMappingURL=index.63aff760.js.map
