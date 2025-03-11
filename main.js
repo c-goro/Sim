@@ -1000,7 +1000,9 @@ treeIcon       = p.loadImage(treeImg);
   });
 };
 
-new p5Constructor(sketch, document.getElementById("simulation-container"));
+window.addEventListener('load', () => {
+    new p5Constructor(sketch, document.getElementById("simulation-container"));
+});
 
 // Existing controls
 window.pauseSimulation = () => { paused=true; };
