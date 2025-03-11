@@ -1,4 +1,4 @@
-import * as Chart from "chart.js/auto";
+import Chart from "chart.js/auto";
 
 // Remove module imports for images and use string paths instead:
 const acornImg          = "./icons/acorn.png";
