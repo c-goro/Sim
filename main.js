@@ -1,4 +1,4 @@
-import p5 from "p5";
+import * as p5 from "p5";
 import * as Chart from "chart.js/auto";
 
 // Remove module imports for images and use string paths instead:
