@@ -1,5 +1,7 @@
-import * as p5 from "p5";
+import * as p5Module from "p5";
 import * as Chart from "chart.js/auto";
+
+const p5Constructor = p5Module.default || p5Module;
 
 // Remove module imports for images and use string paths instead:
 const acornImg          = "./icons/acorn.png";
@@ -997,7 +999,7 @@ treeIcon       = p.loadImage(treeImg);
   });
 };
 
-new p5(sketch, document.getElementById("simulation-container"));
+new p5Constructor(sketch, document.getElementById("simulation-container"));
 
 // Existing controls
 window.pauseSimulation = () => { paused=true; };
