@@ -1,5 +1,5 @@
-import * as ChartJs from "chart.js/auto";
-const { Chart } = ChartJs; 
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 // Remove module imports for images and use string paths instead:
 const acornImg          = "./icons/acorn.png";
