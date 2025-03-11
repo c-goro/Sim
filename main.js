@@ -1,5 +1,5 @@
-import { Chart, registerables } from "chart.js";
-
+import * as ChartJs from "chart.js/auto";
+const { Chart } = ChartJs; 
 Chart.register(...registerables);
 
 // Remove module imports for images and use string paths instead:
