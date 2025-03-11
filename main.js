@@ -1,7 +1,8 @@
-import * as p5Module from "p5";
+// Remove this line:
+// import * as p5Module from "p5";
+// Instead, assign the constructor from the global window object:
+const p5Constructor = window.p5;
 import * as Chart from "chart.js/auto";
-
-const p5Constructor = p5Module.default || p5Module;
 
 // Remove module imports for images and use string paths instead:
 const acornImg          = "./icons/acorn.png";
