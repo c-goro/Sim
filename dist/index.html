@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Simulation with p5.js and Chart.js</title>
+  </head>
+  <body>
+    <!-- Simulation controls -->
+    <button id="pauseBtn" onclick="togglePause()">Toggle Pause</button>
+    <button id="restartBtn" onclick="restartSimulation()">Restart</button>
+    <!-- New tick rate input -->
+    <label for="tickInput">Years per Second:</label>
+    <input type="number" id="tickInput" value="1" min="0.1" step="0.1">
+    <!-- NEW: Grid lines checkbox -->
+    <label for="showGrid">Show Grid Lines:</label>
+    <input type="checkbox" id="showGrid" checked="">
+    <!-- NEW: Magnifier checkbox -->
+    <label for="enableZoom">Enable Magnifier:</label>
+    <input type="checkbox" id="enableZoom">
+    <!-- NEW: Chart height input -->
+    <label for="chartHeight">Chart Height (px):</label>
+    <input type="number" id="chartHeight" value="450" min="100" step="10">
+    <!-- NEW: Zoom level slider -->
+    <div hidden="true">
+        <label for="zoomLevel">Zoom Level (1x to 10x):</label>
+        <input type="range" id="zoomLevel" min="1" max="10" step="0.1" value="1">
+    </div>
+    <!-- Container for the p5.js canvas -->
+    <div id="simulation-container"></div>
+    <!-- Horizontal legend below the simulation using custom icons -->
+    <div id="legend-container" style="justify-content: space-around; margin-top: 10px; font-size: 12px; display: flex">
+      <div>
+        <img src="/water.1e63d865.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Water Icon">
+        Water
+      </div>
+      <div>
+        <img src="/dirt.7d232fc3.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Dirt Icon">
+        Dirt
+      </div>
+      <div>
+        <img src="/rock.d5e192ed.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Rock Icon">
+        Rock
+      </div>
+      <div>
+        <img src="/grass.44ff3d13.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Grass Icon">
+        Grass
+      </div>
+      <div>
+        <img src="/acorn.32d8dbf9.png" style="width: 10px; height: 14px; margin-right: 4px" alt="Tree Seed Icon">
+        Tree Seed
+      </div>
+      <div>
+        <img src="/sapling.11da8360.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Sapling Icon">
+        Sapling
+      </div>
+      <div>
+        <img src="/tree.cb184b93.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Mature Tree Icon">
+        Mature Tree
+      </div>
+      <div>
+        <img src="/dead-tree.d8be795d.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Dead Tree Icon">
+        Dead Tree
+      </div>
+      <div>
+        <img src="/tree-vine.8886a8bd.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Tree Vine Icon">
+        Tree Vine
+      </div>
+      <div>
+        <img src="/dead-tree-vine.99e33368.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Dead Tree Vine Icon">
+        Dead Tree Vine
+      </div>
+      <div>
+        <img src="/flower-seed.7f6a1ca4.png" style="width: 10px; height: 14px; margin-right: 4px" alt="Flower Seed Icon">
+        Flower Seed
+      </div>
+      <div>
+        <img src="/meadow.52c2127a.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Meadow Icon">
+        Meadow
+      </div>
+      <!-- Removed old vine icon. New vine-related icons below: -->
+      <div>
+        <img src="/meadow-vine.a7af1302.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Meadow Vine Icon">
+        Meadow Vine
+      </div>
+      <div>
+        <img src="/fire.b722021f.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Fire Icon">
+        Fire
+      </div>
+      <div>
+        <img src="/bee.aebeeef4.png" style="width: 10px; height: 10px; margin-right: 4px" alt="Bees Icon">
+        Bees
+      </div>
+    </div>
+    <!-- Updated Canvas for Chart.js graph -->
+    <canvas id="myChart" style="width: 100%; height: 400px"></canvas>
+    <!-- NEW: Second canvas for average age chart -->
+    <canvas id="myAgeChart" style="width: 100%; height: 400px; margin-top: 10px"></canvas>
+    <!-- Our main JavaScript file -->
+    <script src="/index.63aff760.js" defer=""></script>
+  </body>
+</html>
