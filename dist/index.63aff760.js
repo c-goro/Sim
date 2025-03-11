@@ -601,7 +601,7 @@ var _p5 = require("p5");
 var _p5Default = parcelHelpers.interopDefault(_p5);
 var _auto = require("chart.js/auto");
 var _autoDefault = parcelHelpers.interopDefault(_auto);
-var _acornPng = require("./icons/acorn.png"); // import image as a module
+var _acornPng = require("./icons/acorn.png");
 var _acornPngDefault = parcelHelpers.interopDefault(_acornPng);
 var _waterPng = require("./icons/water.png");
 var _waterPngDefault = parcelHelpers.interopDefault(_waterPng);
@@ -638,39 +638,27 @@ const ROCK = "rock";
 const GRASS = "grass";
 // Global simulation control
 let paused = false;
-// [WEEKLY CHANGE] We still call it tickRate, but we treat each tick as 1 "week" of game time.
-// If you want the sim to physically run 52× slower in real seconds, set tickRate = 1/52. 
-// That means one tick every 52 real seconds. 
-// If you just want each tick to represent a week in *game-time* while still ticking quickly in real-time, 
-// you can keep a faster tickRate.  The crucial part is how we increment "simulationYears" below.
-let tickRate = 1; // If you want the same real-time speed as before, keep 1. 
-// Each tick is "1 week" in game-time, but we still do 1 tick per real second, etc.
+// [WEEKLY CHANGE] Each tick is 1 "week" of game-time => add 1/52 to simulationYears each tick
+let tickRate = 1;
 let tickInterval = 1 / tickRate;
 let lastTickTime = 0;
 let timeAccumulator = 0;
-// [WEEKLY CHANGE] We keep this variable name, but each tick adds 1/52 so it measures years continuously.
-let simulationYears = 0;
+let simulationYears = 0; // measured in years, each tick adds 1/52
 // Grid configuration
 const cols = 70;
 const rows = 30;
 const cellSize = 15;
 let grid = [];
-// Data tracking for Chart.js
+// For Chart.js
 let populationHistory = [];
-let myChart, averageAgeChart; // add averageAgeChart variable
-// Global arrays for plants and vines (one per grid cell)
+let myChart, averageAgeChart;
+// We store plants and vines in parallel arrays
 let plantLayer = [];
 let vineLayer = [];
-// View, zoom, and pan config
-const viewWidth = document.documentElement.clientWidth;
-const viewHeight = 1000;
-let zoomLevel = 1;
-let panX = 0, panY = 0;
-let dragStartX = 0, dragStartY = 0;
-let rockTreeCounter = []; // tracks how many years a rock has had >=3 adjacent mature trees
-// This constant factor is used for partial increments and probability scaling:
-const WEEK_FACTOR = 1 / 52; // 1 week = 1/52 year
-// Generate rivers instead of random water distribution
+// Used to track how long a rock has had >=3 adjacent trees
+let rockTreeCounter = [];
+const WEEK_FACTOR = 1 / 52; // 1 "week" = 1/52 year
+// Generate map with rivers and mountains
 function generateRivers(p) {
     grid = [];
     rockTreeCounter = [];
@@ -681,7 +669,6 @@ function generateRivers(p) {
         rockTreeCounter[i] = [];
         for(let j = 0; j < rows; j++){
             let r = p.random(1);
-            // Fewer isolated rocks
             if (r < 0.1) grid[i][j] = ROCK;
             else if (r < 0.55) grid[i][j] = DIRT;
             else grid[i][j] = GRASS;
@@ -690,7 +677,7 @@ function generateRivers(p) {
             rockTreeCounter[i][j] = grid[i][j] === ROCK ? 0 : null;
         }
     }
-    // Create a couple of meandering rivers
+    // Make meandering rivers
     const riverCount = 2;
     for(let k = 0; k < riverCount; k++){
         let col = Math.floor(p.random(cols));
@@ -703,7 +690,7 @@ function generateRivers(p) {
             }
         }
     }
-    // Generate mountain ranges
+    // Generate mountains
     const mountainCount = 2;
     for(let k = 0; k < mountainCount; k++){
         let col = Math.floor(p.random(cols));
@@ -721,7 +708,7 @@ function generateRivers(p) {
 window.togglePause = ()=>{
     paused = !paused;
 };
-// Global keydown listener for spacebar
+// Key listener for spacebar toggling
 window.addEventListener("keydown", (e)=>{
     if (e.code === "Space") {
         e.preventDefault();
@@ -731,40 +718,38 @@ window.addEventListener("keydown", (e)=>{
 let pInstance;
 let showGrid = true;
 let zoomEnabled = false;
-// p5.js sketch using instance mode
+let zoomLevel = 1;
+let panX = 0, panY = 0;
+let dragStartX = 0, dragStartY = 0;
+// p5.js sketch
 const sketch = (p)=>{
+    // preload images
     let waterIcon, dirtIcon, rockIcon, grassIcon;
     let beeIcon;
     let treeSeedIcon, saplingIcon, treeIcon, deadTreeIcon, flowerSeedIcon, meadowIcon;
     let treeVineIcon, deadTreeVineIcon, meadowVineIcon, fireIcon;
     p.preload = ()=>{
-        console.log("Preloading assets");
-        try {
-            waterIcon = p.loadImage((0, _waterPngDefault.default));
-            dirtIcon = p.loadImage((0, _dirtPngDefault.default));
-            rockIcon = p.loadImage((0, _rockPngDefault.default));
-            grassIcon = p.loadImage((0, _grassPngDefault.default));
-            treeSeedIcon = p.loadImage((0, _acornPngDefault.default));
-            saplingIcon = p.loadImage((0, _saplingPngDefault.default));
-            treeIcon = p.loadImage((0, _treePngDefault.default));
-            deadTreeIcon = p.loadImage((0, _deadTreePngDefault.default));
-            flowerSeedIcon = p.loadImage((0, _flowerSeedPngDefault.default));
-            meadowIcon = p.loadImage((0, _meadowPngDefault.default));
-            beeIcon = p.loadImage((0, _beePngDefault.default));
-            treeVineIcon = p.loadImage((0, _treeVinePngDefault.default));
-            deadTreeVineIcon = p.loadImage((0, _deadTreeVinePngDefault.default));
-            meadowVineIcon = p.loadImage((0, _meadowVinePngDefault.default));
-            fireIcon = p.loadImage((0, _firePngDefault.default));
-        } catch (e) {
-            console.error("Error during asset preload:", e);
-        }
-        console.log("DONE Preloading assets");
+        waterIcon = p.loadImage((0, _waterPngDefault.default));
+        dirtIcon = p.loadImage((0, _dirtPngDefault.default));
+        rockIcon = p.loadImage((0, _rockPngDefault.default));
+        grassIcon = p.loadImage((0, _grassPngDefault.default));
+        treeSeedIcon = p.loadImage((0, _acornPngDefault.default));
+        saplingIcon = p.loadImage((0, _saplingPngDefault.default));
+        treeIcon = p.loadImage((0, _treePngDefault.default));
+        deadTreeIcon = p.loadImage((0, _deadTreePngDefault.default));
+        flowerSeedIcon = p.loadImage((0, _flowerSeedPngDefault.default));
+        meadowIcon = p.loadImage((0, _meadowPngDefault.default));
+        beeIcon = p.loadImage((0, _beePngDefault.default));
+        treeVineIcon = p.loadImage((0, _treeVinePngDefault.default));
+        deadTreeVineIcon = p.loadImage((0, _deadTreeVinePngDefault.default));
+        meadowVineIcon = p.loadImage((0, _meadowVinePngDefault.default));
+        fireIcon = p.loadImage((0, _firePngDefault.default));
     };
     p.setup = ()=>{
-        console.log("Setup called");
         pInstance = p;
-        p.createCanvas(viewWidth, viewHeight);
+        p.createCanvas(document.documentElement.clientWidth, 1000);
         generateRivers(p);
+        // Create population chart
         const canvas = document.getElementById("myChart");
         const initialHeight = parseInt(document.getElementById("chartHeight")?.value) || 200;
         canvas.style.width = document.documentElement.clientWidth + "px";
@@ -838,7 +823,7 @@ const sketch = (p)=>{
             canvas.width = newWidth;
             myChart.update();
         });
-        // Setup second canvas for average age chart
+        // Create average age chart
         const ageCanvas = document.getElementById("myAgeChart");
         ageCanvas.style.width = document.documentElement.clientWidth + "px";
         ageCanvas.width = document.documentElement.clientWidth;
@@ -898,13 +883,14 @@ const sketch = (p)=>{
                 responsive: false
             }
         });
-        document.getElementById("showGrid").addEventListener("change", (e)=>{
+        // UI checkboxes
+        document.getElementById("showGrid")?.addEventListener("change", (e)=>{
             showGrid = e.target.checked;
         });
-        document.getElementById("enableZoom").addEventListener("change", (e)=>{
+        document.getElementById("enableZoom")?.addEventListener("change", (e)=>{
             zoomEnabled = e.target.checked;
         });
-        document.getElementById("zoomLevel").addEventListener("input", (e)=>{
+        document.getElementById("zoomLevel")?.addEventListener("input", (e)=>{
             zoomLevel = parseFloat(e.target.value) || 1;
         });
     };
@@ -930,120 +916,33 @@ const sketch = (p)=>{
         p.translate(panX, panY);
         p.scale(zoomLevel);
         if (!paused) {
-            timeAccumulator += p.deltaTime / 1000; // Real-time in seconds
+            timeAccumulator += p.deltaTime / 1000; // in seconds
             let ticksThisFrame = 0;
             while(timeAccumulator >= tickInterval){
-                simulationTick(p);
-                grid = nextState(grid, p);
-                // [WEEKLY CHANGE] Instead of adding 1 each tick, add 1/52 year each tick => 1 week
+                stepSimulation(p); // <<-- Single unified step
                 simulationYears += WEEK_FACTOR;
                 ticksThisFrame++;
                 timeAccumulator -= tickInterval;
             }
-            if (ticksThisFrame > 0) {
-                // Count populations
-                let counts = {
-                    treeSeed: 0,
-                    sapling: 0,
-                    matureTree: 0,
-                    flowerSeed: 0,
-                    meadow: 0,
-                    vine: 0
-                };
-                for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-                    let plant = plantLayer[i][j];
-                    if (plant) {
-                        if (plant.type === "tree") {
-                            if (plant.state === "seed") counts.treeSeed++;
-                            else if (plant.state === "sapling") counts.sapling++;
-                            else if (plant.state === "tree") counts.matureTree++;
-                        } else if (plant.type === "flower") {
-                            if (plant.state === "seed") counts.flowerSeed++;
-                            else if (plant.state === "meadow") counts.meadow++;
-                        }
-                    }
-                    if (vineLayer[i][j]) counts.vine++;
-                }
-                myChart.data.labels.push(simulationYears.toFixed(2));
-                myChart.data.datasets[0].data.push(counts.treeSeed);
-                myChart.data.datasets[1].data.push(counts.sapling);
-                myChart.data.datasets[2].data.push(counts.matureTree);
-                myChart.data.datasets[3].data.push(counts.flowerSeed);
-                myChart.data.datasets[4].data.push(counts.meadow);
-                myChart.data.datasets[5].data.push(counts.vine);
-                myChart.update();
-                // Compute average age per category
-                let sum = {
-                    treeSeed: 0,
-                    sapling: 0,
-                    matureTree: 0,
-                    flowerSeed: 0,
-                    meadow: 0,
-                    vine: 0
-                };
-                let count = {
-                    treeSeed: 0,
-                    sapling: 0,
-                    matureTree: 0,
-                    flowerSeed: 0,
-                    meadow: 0,
-                    vine: 0
-                };
-                for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-                    let plant = plantLayer[i][j];
-                    if (plant) {
-                        if (plant.type === "tree") {
-                            if (plant.state === "seed") {
-                                sum.treeSeed += plant.age;
-                                count.treeSeed++;
-                            } else if (plant.state === "sapling") {
-                                sum.sapling += plant.age;
-                                count.sapling++;
-                            } else if (plant.state === "tree") {
-                                sum.matureTree += plant.age;
-                                count.matureTree++;
-                            }
-                        } else if (plant.type === "flower") {
-                            if (plant.state === "seed") {
-                                sum.flowerSeed += plant.age;
-                                count.flowerSeed++;
-                            } else if (plant.state === "meadow") {
-                                sum.meadow += plant.age;
-                                count.meadow++;
-                            }
-                        }
-                    }
-                    if (vineLayer[i][j]) {
-                        sum.vine += vineLayer[i][j].age;
-                        count.vine++;
-                    }
-                }
-                const avg = {
-                    treeSeed: count.treeSeed ? sum.treeSeed / count.treeSeed : 0,
-                    sapling: count.sapling ? sum.sapling / count.sapling : 0,
-                    matureTree: count.matureTree ? sum.matureTree / count.matureTree : 0,
-                    flowerSeed: count.flowerSeed ? sum.flowerSeed / count.flowerSeed : 0,
-                    meadow: count.meadow ? sum.meadow / count.meadow : 0,
-                    vine: count.vine ? sum.vine / count.vine : 0
-                };
-                averageAgeChart.data.labels.push(simulationYears.toFixed(2));
-                averageAgeChart.data.datasets[0].data.push(avg.treeSeed);
-                averageAgeChart.data.datasets[1].data.push(avg.sapling);
-                averageAgeChart.data.datasets[2].data.push(avg.matureTree);
-                averageAgeChart.data.datasets[3].data.push(avg.flowerSeed);
-                averageAgeChart.data.datasets[4].data.push(avg.meadow);
-                averageAgeChart.data.datasets[5].data.push(avg.vine);
-                averageAgeChart.update();
-            }
+            if (ticksThisFrame > 0) updateCharts();
         } else timeAccumulator = 0;
         // Render terrain
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            let x = i * cellSize;
-            let y = j * cellSize;
-            if (grid[i][j] === WATER) p.image(waterIcon, x, y, cellSize, cellSize);
-            else if (grid[i][j] === DIRT) p.image(dirtIcon, x, y, cellSize, cellSize);
-            else if (grid[i][j] === ROCK) p.image(rockIcon, x, y, cellSize, cellSize);
-            else if (grid[i][j] === GRASS) p.image(grassIcon, x, y, cellSize, cellSize);
+            let x = i * cellSize, y = j * cellSize;
+            switch(grid[i][j]){
+                case WATER:
+                    p.image(waterIcon, x, y, cellSize, cellSize);
+                    break;
+                case DIRT:
+                    p.image(dirtIcon, x, y, cellSize, cellSize);
+                    break;
+                case ROCK:
+                    p.image(rockIcon, x, y, cellSize, cellSize);
+                    break;
+                case GRASS:
+                    p.image(grassIcon, x, y, cellSize, cellSize);
+                    break;
+            }
             if (showGrid) {
                 p.stroke("black");
                 p.noFill();
@@ -1066,120 +965,81 @@ const sketch = (p)=>{
         }
         p.pop();
         // Tooltip
-        p.push();
-        p.resetMatrix();
-        let simMouseX = (p.mouseX - panX) / zoomLevel;
-        let simMouseY = (p.mouseY - panY) / zoomLevel;
-        let hoverI = Math.floor(simMouseX / cellSize);
-        let hoverJ = Math.floor(simMouseY / cellSize);
-        if (hoverI >= 0 && hoverI < cols && hoverJ >= 0 && hoverJ < rows) {
-            let info = "Terrain: " + grid[hoverI][hoverJ] + "\n";
-            let plant = plantLayer[hoverI][hoverJ];
-            if (plant) {
-                info += `Plant: ${plant.type} (${plant.state})\n`;
-                info += `Age (years): ${plant.age.toFixed(2)}\n`;
-                if (plant.type === "tree") {
-                    if (plant.vineExposure) info += "Vine Exposure: " + plant.vineExposure.toFixed(2) + "\n";
-                    if (plant.deadAge) info += "Dead Age: " + plant.deadAge.toFixed(2) + "\n";
-                }
-                if (plant.onFire) info += "On Fire: " + plant.fireAge.toFixed(2) + "\n";
-                if (plant.bees) info += "Bees Timer: " + plant.bees.toFixed(2) + "\n";
-            }
-            let tooltipWidth = 0;
-            let lines = info.split("\n");
-            for (let line of lines){
-                let w = p.textWidth(line);
-                if (w > tooltipWidth) tooltipWidth = w;
-            }
-            let lineHeight = 12;
-            let tooltipHeight = lines.length * lineHeight;
-            let tooltipX = p.mouseX + 10;
-            let tooltipY = p.mouseY + 10;
-            p.fill(255, 240);
-            p.stroke(0);
-            p.rect(tooltipX, tooltipY, tooltipWidth + 10, tooltipHeight + 10, 5);
-            p.fill(0);
-            p.noStroke();
-            p.textAlign(p.LEFT, p.TOP);
-            p.text(info, tooltipX + 5, tooltipY + 5);
-        }
-        p.pop();
+        drawTooltip(p);
     };
-    // [WEEKLY CHANGE] We scale yearly probabilities by /52
-    // and do partial increments in counters that used to be integer increments.
-    function nextState(oldGrid, p) {
+    // Single unified simulation step
+    function stepSimulation(p) {
+        // 1) Water->Rock->Dirt using BFS within radius 3
+        convertRockNearWater();
+        // 2) Convert some DIRT => GRASS
+        // 3) Count adjacency for rock->dirt via trees
+        // 4) Dirt->rock random
+        // 5) River meander
+        // 6) Plant sprouting on GRASS
+        // 7) Growth logic (trees, flowers, meadows)
+        // 8) Fire mechanics
+        // 9) Vines, including spread and removal
+        // etc.
+        // Because we’re merging your old “nextState” and “simulationTick,”
+        // we need to read from the grid states *as is*, then do in-place or minimal updates.
+        // For certain steps (like meandering water, or converting dirt->rock) we can safely
+        // do in-place checks or gather changes in arrays and then commit them.
+        // ––––––––––––––––––––––––––––––––––––––––––––––––––––––
+        //        2) & 3) & 4) & 5) => all terrain changes
+        // ––––––––––––––––––––––––––––––––––––––––––––––––––––––
+        // We'll hold on to some “pending changes” for terrain:
         let newGrid = [];
-        for(let i = 0; i < cols; i++)newGrid[i] = oldGrid[i].slice();
-        // Water converts rock to dirt in a radius 3
+        for(let i = 0; i < cols; i++)newGrid[i] = grid[i].slice();
+        // Grass spreads to adjacent dirt
         for(let i = 0; i < cols; i++){
-            for(let j = 0; j < rows; j++)if (oldGrid[i][j] === WATER) {
-                for(let dx = -3; dx <= 3; dx++)for(let dy = -1; dy <= 1; dy++){
-                    const x = i + dx, y = j + dy;
-                    if (x >= 0 && y >= 0 && x < cols && y < rows) {
-                        if (oldGrid[x][y] === ROCK) newGrid[x][y] = DIRT;
-                    }
-                }
-            }
-        }
-        // Grass spreads to adjacent dirt cells
-        for(let i = 0; i < cols; i++){
-            for(let j = 0; j < rows; j++)if (oldGrid[i][j] === DIRT) {
-                let hasGrass = false;
-                let hasWater = false;
+            for(let j = 0; j < rows; j++)if (grid[i][j] === DIRT) {
+                let hasGrass = false, hasWater = false;
                 for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
-                    if (dx === 0 && dy === 0) continue;
-                    const x = i + dx, y = j + dy;
-                    if (x >= 0 && y >= 0 && x < cols && y < rows) {
-                        if (oldGrid[x][y] === GRASS) hasGrass = true;
-                        if (oldGrid[x][y] === WATER) hasWater = true;
-                    }
+                    let x = i + dx, y = j + dy;
+                    if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+                    if (grid[x][y] === GRASS) hasGrass = true;
+                    if (grid[x][y] === WATER) hasWater = true;
                 }
                 if (hasGrass) {
-                    // [WEEKLY CHANGE] was 0.2 or 0.05 per year => divide by 52
                     let chance = hasWater ? 0.2 * WEEK_FACTOR : 0.05 * WEEK_FACTOR;
                     if (p.random(1) < chance) newGrid[i][j] = GRASS;
                 }
             }
         }
-        // Check each rock cell for adjacent trees and update breakdown counter
+        // Check each rock cell for adjacency to 3+ mature trees
         for(let i = 0; i < cols; i++){
-            for(let j = 0; j < rows; j++)if (oldGrid[i][j] === ROCK) {
+            for(let j = 0; j < rows; j++)if (grid[i][j] === ROCK) {
                 let treeCount = 0;
                 for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
                     if (dx === 0 && dy === 0) continue;
                     let x = i + dx, y = j + dy;
-                    if (x >= 0 && y >= 0 && x < cols && y < rows) {
-                        let adjPlant = plantLayer[x][y];
-                        if (adjPlant && adjPlant.type === "tree" && adjPlant.state === "tree") treeCount++;
-                    }
+                    if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+                    let adjPlant = plantLayer[x][y];
+                    if (adjPlant && adjPlant.type === "tree" && adjPlant.state === "tree") treeCount++;
                 }
-                if (treeCount >= 3) // [WEEKLY CHANGE] increment by 1/52 per week
-                rockTreeCounter[i][j] += WEEK_FACTOR;
+                if (treeCount >= 3) rockTreeCounter[i][j] += WEEK_FACTOR;
                 else rockTreeCounter[i][j] = 0;
-                // threshold 25 years => keep ">=25"
                 if (rockTreeCounter[i][j] >= 25) {
                     newGrid[i][j] = DIRT;
                     rockTreeCounter[i][j] = 0;
                 }
             }
         }
-        // Dirt-to-rock conversion
+        // Dirt->rock
         for(let i = 1; i < cols - 1; i++)for(let j = 1; j < rows - 1; j++){
-            if (oldGrid[i][j] === DIRT && oldGrid[i - 1][j] === DIRT && oldGrid[i + 1][j] === DIRT && oldGrid[i][j - 1] === DIRT && oldGrid[i][j + 1] === DIRT) // [WEEKLY CHANGE] was 0.1 per year => 0.1/52 per week
-            {
+            if (grid[i][j] === DIRT && grid[i - 1][j] === DIRT && grid[i + 1][j] === DIRT && grid[i][j - 1] === DIRT && grid[i][j + 1] === DIRT) {
                 if (p.random(1) < 0.1 * WEEK_FACTOR) newGrid[i][j] = ROCK;
             }
         }
         // River meandering
-        // was meanderProb=0.005 => 0.005/52
         const meanderProb = 0.005 * WEEK_FACTOR;
         for(let j = 1; j < rows - 1; j++){
-            for(let i = 1; i < cols - 3; i++)if (newGrid[i][j] === WATER && newGrid[i + 1][j] === WATER && newGrid[i + 2][j] === WATER && (i === 1 || newGrid[i - 1][j] !== WATER) && (i + 3 >= cols || newGrid[i + 3][j] !== WATER)) {
+            for(let i = 1; i < cols - 3; i++)if (grid[i][j] === WATER && grid[i + 1][j] === WATER && grid[i + 2][j] === WATER && (i === 1 || grid[i - 1][j] !== WATER) && (i + 3 >= cols || grid[i + 3][j] !== WATER)) {
                 if (p.random(1) < meanderProb) {
-                    if (p.random(1) < 0.5 && i > 1 && newGrid[i - 1][j] !== WATER) {
+                    if (p.random(1) < 0.5 && i > 1 && grid[i - 1][j] !== WATER) {
                         newGrid[i - 1][j] = WATER;
                         newGrid[i + 2][j] = DIRT;
-                    } else if (i + 3 < cols && newGrid[i + 3][j] !== WATER) {
+                    } else if (i + 3 < cols && grid[i + 3][j] !== WATER) {
                         newGrid[i + 3][j] = WATER;
                         newGrid[i][j] = DIRT;
                     }
@@ -1187,12 +1047,14 @@ const sketch = (p)=>{
                 break;
             }
         }
-        return newGrid;
-    }
-    function simulationTick(p) {
-        // [WEEKLY CHANGE] 1/200 => 1/(200*52); 0.005 => 0.005/52, etc.
+        // Commit the newGrid changes
+        grid = newGrid;
+        // ––––––––––––––––––––––––––––––––––––––––––––––––––––––
+        //         Now handle PLANTS and VINES in 1 pass
+        // ––––––––––––––––––––––––––––––––––––––––––––––––––––––
+        // 1) Possibly spawn new seeds in GRASS
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            if (grid[i][j] === GRASS && !plantLayer[i][j]) // was 1/200 => 1/(200*52)
+            if (grid[i][j] === GRASS && !plantLayer[i][j]) // was 1/200 => now (1/200)*WEEK_FACTOR
             {
                 if (p.random(1) < 0.005 * WEEK_FACTOR) {
                     if (p.random(1) < 0.5) plantLayer[i][j] = {
@@ -1208,107 +1070,119 @@ const sketch = (p)=>{
                 }
             }
         }
-        // Process growth
+        // 2) Grow existing plants, do their adjacency-based spawns, etc.
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let plant = plantLayer[i][j];
-            if (plant) {
-                // [WEEKLY CHANGE] add 1/52 year
-                plant.age += WEEK_FACTOR;
-                if (plant.type === "tree") {
-                    if (plant.state === "seed" && plant.age >= 3) plant.state = "sapling";
-                    else if (plant.state === "sapling" && plant.age >= 10) {
-                        plant.state = "tree";
-                        let ni = i + Math.floor(p.random(-3, 4));
-                        let nj = j + Math.floor(p.random(-3, 4));
-                        if (ni >= 0 && nj >= 0 && ni < cols && nj < rows && grid[ni][nj] === GRASS && !plantLayer[ni][nj]) {
-                            let distance = Math.max(Math.abs(ni - i), Math.abs(nj - j));
-                            // was 0.25 or 1/(5*distance) => scale those by /52 if they're truly per-year rates
-                            // If these were intended as "immediate chance upon tree formation," you might skip scaling.
-                            // But assuming it's a yearly chance:
-                            let chance = 0;
-                            if (grid[ni][nj] === DIRT) chance = 0.25 * WEEK_FACTOR;
-                            else if (grid[ni][nj] === ROCK) chance = 1 / (5 * distance) * WEEK_FACTOR;
-                            if (p.random(1) < chance) plantLayer[ni][nj] = {
-                                type: "tree",
+            if (!plant) continue;
+            // Age the plant
+            plant.age += WEEK_FACTOR;
+            if (plant.type === "tree") {
+                // tree state changes
+                if (plant.state === "seed" && plant.age >= 3) plant.state = "sapling";
+                else if (plant.state === "sapling" && plant.age >= 10) {
+                    plant.state = "tree";
+                    // Attempt to drop a seed randomly in ~3-tile radius
+                    let ni = i + Math.floor(p.random(-3, 4));
+                    let nj = j + Math.floor(p.random(-3, 4));
+                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows && grid[ni][nj] === GRASS && !plantLayer[ni][nj]) {
+                        let distance = Math.max(Math.abs(ni - i), Math.abs(nj - j));
+                        // (these might have originally been immediate-chance logic, so 
+                        //  scale by WEEK_FACTOR only if truly meant to be yearly)
+                        let chance = 0;
+                        // the code references “if (grid[ni][nj]===DIRT) chance=0.25*WEEK_FACTOR”, etc.
+                        // but that’s not in your original code, so adapt as needed if you want the same rules
+                        if (grid[ni][nj] === DIRT) chance = 0.25 * WEEK_FACTOR;
+                        else if (grid[ni][nj] === ROCK) chance = 1 / (5 * distance) * WEEK_FACTOR;
+                        if (p.random(1) < chance) plantLayer[ni][nj] = {
+                            type: "tree",
+                            state: "seed",
+                            age: 0
+                        };
+                    }
+                }
+                // Check vine exposure
+                if (plant.state === "tree") {
+                    if (vineLayer[i][j]) {
+                        plant.vineExposure = (plant.vineExposure || 0) + WEEK_FACTOR;
+                        if (plant.vineExposure >= 10) {
+                            plant.state = "dead";
+                            plant.deadAge = 0;
+                        }
+                    } else plant.vineExposure = 0;
+                }
+                if (plant.state === "dead") {
+                    plant.deadAge = (plant.deadAge || 0) + WEEK_FACTOR;
+                    if (plant.deadAge >= 6) plantLayer[i][j] = {
+                        type: "flower",
+                        state: "meadow",
+                        age: 0
+                    };
+                }
+            } else if (plant.type === "flower") {
+                // flower transitions
+                if (plant.state === "seed" && plant.age >= 1) {
+                    plant.state = "meadow";
+                    // start bees timer
+                    plant.bees = 3;
+                    // attempt local spreading
+                    for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
+                        if (dx === 0 && dy === 0) continue;
+                        let nx = i + dx, ny = j + dy;
+                        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+                        if (grid[nx][ny] === GRASS && !plantLayer[nx][ny]) {
+                            // reduce chance if near many mature trees
+                            let matureCount = 0;
+                            for(let ax = -1; ax <= 1; ax++)for(let ay = -1; ay <= 1; ay++){
+                                let tx = nx + ax, ty = ny + ay;
+                                if (tx < 0 || ty < 0 || tx >= cols || ty >= rows) continue;
+                                let adj = plantLayer[tx][ty];
+                                if (adj && adj.type === "tree" && adj.state === "tree") matureCount++;
+                            }
+                            let modChance = 0.3 * WEEK_FACTOR / Math.pow(2, matureCount);
+                            if (p.random(1) < modChance) plantLayer[nx][ny] = {
+                                type: "flower",
                                 state: "seed",
                                 age: 0
                             };
                         }
                     }
-                } else if (plant.type === "flower") {
-                    if (plant.state === "seed" && plant.age >= 1) {
-                        plant.state = "meadow";
-                        // Bees: was 3 => interpret as 3 years => handle with partial decrement
-                        plant.bees = 3;
+                }
+                if (plant.state === "meadow") {
+                    // If bees are present, decrement them
+                    if (plant.bees) {
+                        plant.bees -= WEEK_FACTOR;
+                        if (plant.bees <= 0) delete plant.bees;
+                    } else {
+                        // Active reclamation => become trees if next to 2 or more mature trees
+                        let matureCount = 0;
                         for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
                             if (dx === 0 && dy === 0) continue;
-                            let ni = i + dx, nj = j + dy;
-                            if (ni >= 0 && nj >= 0 && ni < cols && nj < rows && grid[ni][nj] === GRASS && !plantLayer[ni][nj]) {
-                                let matureCount = 0;
-                                for(let ax = -1; ax <= 1; ax++)for(let ay = -1; ay <= 1; ay++){
-                                    let tx = ni + ax, ty = nj + ay;
-                                    if (tx >= 0 && ty >= 0 && tx < cols && ty < rows) {
-                                        let adj = plantLayer[tx][ty];
-                                        if (adj && adj.type === "tree" && adj.state === "tree") matureCount++;
-                                    }
-                                }
-                                // was 0.3 => 0.3/52
-                                let modChance = 0.3 * WEEK_FACTOR / Math.pow(2, matureCount);
-                                if (p.random(1) < modChance) plantLayer[ni][nj] = {
-                                    type: "flower",
-                                    state: "seed",
-                                    age: 0
-                                };
-                            }
+                            let nx = i + dx, ny = j + dy;
+                            if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+                            let adj = plantLayer[nx][ny];
+                            if (adj && adj.type === "tree" && adj.state === "tree") matureCount++;
                         }
+                        if (matureCount >= 2 && p.random(1) < 0.3 * WEEK_FACTOR) plantLayer[i][j] = {
+                            type: "tree",
+                            state: "seed",
+                            age: 0
+                        };
                     }
                 }
             }
         }
-        // Age bees
-        for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            let plant = plantLayer[i][j];
-            if (plant && plant.type === "flower" && plant.state === "meadow" && plant.bees) {
-                // [WEEKLY CHANGE] bees is in "years," so we do partial decrement
-                plant.bees -= WEEK_FACTOR;
-                if (plant.bees <= 0) delete plant.bees;
-            }
-        }
-        // Active reclamation
-        for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            let plant = plantLayer[i][j];
-            if (plant && plant.type === "flower" && plant.state === "meadow" && !plant.bees) {
-                let matureCount = 0;
-                for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
-                    if (dx === 0 && dy === 0) continue;
-                    let ni = i + dx, nj = j + dy;
-                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows) {
-                        let adj = plantLayer[ni][nj];
-                        if (adj && adj.type === "tree" && adj.state === "tree") matureCount++;
-                    }
-                }
-                // was 0.3 => 0.3/52
-                if (matureCount >= 2 && p.random(1) < 0.3 * WEEK_FACTOR) plantLayer[i][j] = {
-                    type: "tree",
-                    state: "seed",
-                    age: 0
-                };
-            }
-        }
-        // Meadows take over saplings
+        // Meadows taking over saplings
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let plant = plantLayer[i][j];
             if (plant && plant.type === "tree" && plant.state === "sapling") {
                 let meadowCount = 0;
                 for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
                     if (dx === 0 && dy === 0) continue;
-                    let ni = i + dx, nj = j + dy;
-                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows) {
-                        let adj = plantLayer[ni][nj];
-                        if (adj && adj.type === "flower" && adj.state === "meadow") meadowCount++;
-                    }
+                    let nx = i + dx, ny = j + dy;
+                    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+                    let adj = plantLayer[nx][ny];
+                    if (adj && adj.type === "flower" && adj.state === "meadow") meadowCount++;
                 }
-                // was 0.3 => 0.3/52
                 if (meadowCount >= 1 && p.random(1) < 0.3 * WEEK_FACTOR) plantLayer[i][j] = {
                     type: "flower",
                     state: "seed",
@@ -1316,50 +1190,27 @@ const sketch = (p)=>{
                 };
             }
         }
-        // Tree death from vine infestation
+        // 3) Handle vines (spread, removal, aging)
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let plant = plantLayer[i][j];
-            if (plant && plant.type === "tree") {
-                if (plant.state === "tree") {
-                    if (vineLayer[i][j]) {
-                        // was vineExposure++
-                        plant.vineExposure = (plant.vineExposure || 0) + WEEK_FACTOR;
-                        if (plant.vineExposure >= 10) {
-                            plant.state = "dead";
-                            plant.deadAge = 0;
-                        }
-                    } else plant.vineExposure = 0;
-                } else if (plant.state === "dead") {
-                    // was deadAge++ => + WEEK_FACTOR
-                    plant.deadAge = (plant.deadAge || 0) + WEEK_FACTOR;
-                    // used to be 6 => means 6 years => keep the same threshold
-                    if (plant.deadAge >= 6) plantLayer[i][j] = {
-                        type: "flower",
-                        state: "meadow",
-                        age: 0
-                    };
-                }
-            }
-        }
-        // Vines
-        for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            let plant = plantLayer[i][j];
+            let vine = vineLayer[i][j];
             if (grid[i][j] === GRASS && plant && plant.type === "tree") {
-                if (plant.state === "tree" && !vineLayer[i][j]) // was 0.01 => 0.01/52
-                {
+                // possible vine spawn
+                if (plant.state === "tree" && !vine) {
                     if (p.random(1) < 0.01 * WEEK_FACTOR) vineLayer[i][j] = {
                         age: 0
                     };
                 }
-                if (vineLayer[i][j] && plant.state === "tree") // was 0.05 => 0.05/52
-                {
+                // possible vine removal if present
+                if (vine && plant.state === "tree") {
                     if (p.random(1) < 0.05 * WEEK_FACTOR) vineLayer[i][j] = null;
                 }
             }
-            if (vineLayer[i][j]) {
-                // [WEEKLY CHANGE] vineLayer[i][j].age++ => + WEEK_FACTOR
-                vineLayer[i][j].age += WEEK_FACTOR;
-                if (vineLayer[i][j].age >= 2) {
+            // Age the vine and try to spread
+            if (vine) {
+                vine.age += WEEK_FACTOR;
+                if (vine.age >= 2) {
+                    // pick random cardinal neighbor
                     let directions = [
                         [
                             1,
@@ -1379,104 +1230,298 @@ const sketch = (p)=>{
                         ]
                     ];
                     let d = directions[Math.floor(p.random(directions.length))];
-                    let ni = i + d[0], nj = j + d[1];
-                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows && plantLayer[ni][nj] && plantLayer[ni][nj].type === "tree" && plantLayer[ni][nj].state === "tree" && !vineLayer[ni][nj]) // was 0.1 => 0.1/52
-                    {
-                        if (p.random(1) < 0.1 * WEEK_FACTOR) vineLayer[ni][nj] = {
-                            age: 0
-                        };
+                    let nx = i + d[0], ny = j + d[1];
+                    if (nx >= 0 && ny >= 0 && nx < cols && ny < rows) {
+                        let adjPlant = plantLayer[nx][ny];
+                        if (adjPlant && adjPlant.type === "tree" && adjPlant.state === "tree" && !vineLayer[nx][ny]) {
+                            if (p.random(1) < 0.1 * WEEK_FACTOR) vineLayer[nx][ny] = {
+                                age: 0
+                            };
+                        }
                     }
                 }
-            }
-            // Vine removing in meadow
-            if (plant && plant.type === "flower" && plant.state === "meadow" && vineLayer[i][j]) // was 0.0667 => 0.0667/52
-            {
-                if (p.random(1) < 0.0667 * WEEK_FACTOR) vineLayer[i][j] = null;
+                // Vine removal by meadow
+                if (plant && plant.type === "flower" && plant.state === "meadow") {
+                    if (p.random(1) < 0.0667 * WEEK_FACTOR) vineLayer[i][j] = null;
+                }
             }
         }
-        // === Fire mechanics ===
-        // Spreading
+        // 4) Fire mechanics (spread, burning)
+        spreadAndBurnFires(p);
+    }
+    // BFS to convert rock to dirt if within radius=3 of water
+    function convertRockNearWater() {
+        // Collect all water cells as BFS start
+        let queue = [];
+        let dist = [];
+        for(let i = 0; i < cols; i++)dist[i] = new Array(rows).fill(Infinity);
+        for(let i = 0; i < cols; i++){
+            for(let j = 0; j < rows; j++)if (grid[i][j] === WATER) {
+                queue.push({
+                    x: i,
+                    y: j
+                });
+                dist[i][j] = 0;
+            }
+        }
+        // BFS
+        while(queue.length > 0){
+            let { x, y } = queue.shift();
+            let d = dist[x][y];
+            if (d < 3) // expand to neighbors
+            for (let [dx, dy] of [
+                [
+                    1,
+                    0
+                ],
+                [
+                    -1,
+                    0
+                ],
+                [
+                    0,
+                    1
+                ],
+                [
+                    0,
+                    -1
+                ],
+                [
+                    1,
+                    1
+                ],
+                [
+                    1,
+                    -1
+                ],
+                [
+                    -1,
+                    1
+                ],
+                [
+                    -1,
+                    -1
+                ]
+            ]){
+                let nx = x + dx, ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+                if (dist[nx][ny] > d + 1) {
+                    dist[nx][ny] = d + 1;
+                    queue.push({
+                        x: nx,
+                        y: ny
+                    });
+                }
+            }
+        }
+        // Now dist[i][j] is the BFS-distance from the nearest water cell
+        // Convert any ROCK with distance < 4 to DIRT
+        for(let i = 0; i < cols; i++){
+            for(let j = 0; j < rows; j++)if (grid[i][j] === ROCK && dist[i][j] <= 3) grid[i][j] = DIRT;
+        }
+    }
+    function spreadAndBurnFires(p) {
+        // First, gather which cells are onFire
+        // Then decide which neighbors catch fire, etc.
+        let onFire = [];
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let plant = plantLayer[i][j];
-            if (plant) {
-                let hasNeighborOnFire = false;
-                for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
-                    if (dx === 0 && dy === 0) continue;
-                    let ni = i + dx, nj = j + dy;
-                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows) {
-                        if (plantLayer[ni][nj] && plantLayer[ni][nj].onFire) hasNeighborOnFire = true;
-                    }
-                }
-                if (plant.type === "tree") {
-                    if (plant.state === "dead") {
-                        // was 0.01 => 0.01/52
-                        if (hasNeighborOnFire) {
-                            plant.onFire = true;
-                            plant.fireAge = 0;
-                        } else if (!plant.onFire && p.random(1) < 0.01 * WEEK_FACTOR) {
-                            plant.onFire = true;
-                            plant.fireAge = 0;
-                        }
-                    } else if (plant.state === "tree") // was 0.33 => 0.33/52
-                    {
-                        if (hasNeighborOnFire && !plant.onFire && p.random(1) < 0.33 * WEEK_FACTOR) {
-                            plant.onFire = true;
-                            plant.fireAge = 0;
-                        }
-                    }
-                } else if (plant.type === "flower" && plant.state === "meadow") // was 0.1 => 0.1/52
-                {
-                    if (hasNeighborOnFire && !plant.onFire && p.random(1) < 0.1 * WEEK_FACTOR) {
-                        plant.onFire = true;
-                        plant.fireAge = 0;
-                    }
-                }
-            }
-        }
-        // Fire for vines
-        for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let vine = vineLayer[i][j];
-            if (vine) {
-                let hasNeighborOnFire = false;
-                for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
-                    if (dx === 0 && dy === 0) continue;
-                    let ni = i + dx, nj = j + dy;
-                    if (ni >= 0 && nj >= 0 && ni < cols && nj < rows) {
-                        if (plantLayer[ni][nj] && plantLayer[ni][nj].onFire || vineLayer[ni][nj] && vineLayer[ni][nj].onFire) hasNeighborOnFire = true;
+            if (plant && plant.onFire) onFire.push({
+                i,
+                j,
+                isVine: false
+            });
+            if (vine && vine.onFire) onFire.push({
+                i,
+                j,
+                isVine: true
+            });
+        }
+        // For each neighbor of a fire cell, possibly catch fire
+        for (let { i, j, isVine } of onFire){
+            // check all neighbors
+            for(let dx = -1; dx <= 1; dx++)for(let dy = -1; dy <= 1; dy++){
+                if (dx === 0 && dy === 0) continue;
+                let nx = i + dx, ny = j + dy;
+                if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+                let plant = plantLayer[nx][ny];
+                let vine = vineLayer[nx][ny];
+                if (!isVine && plantLayer[i][j]) {
+                    // a plant is on fire
+                    if (plant && !plant.onFire) {
+                        // Check the original logic of probabilities:
+                        // If plant.type==="tree" and plant.state==="dead" => 0.01
+                        // If tree&state==="tree" => 0.33
+                        // If flower&meadow => 0.1
+                        // Scale by WEEK_FACTOR
+                        if (plant.type === "tree" && plant.state === "dead") {
+                            plant.onFire = true;
+                            plant.fireAge = 0;
+                        } else if (plant.type === "tree" && plant.state === "tree") {
+                            if (p.random(1) < 0.33 * WEEK_FACTOR) {
+                                plant.onFire = true;
+                                plant.fireAge = 0;
+                            }
+                        } else if (plant.type === "flower" && plant.state === "meadow") {
+                            if (p.random(1) < 0.1 * WEEK_FACTOR) {
+                                plant.onFire = true;
+                                plant.fireAge = 0;
+                            }
+                        }
                     }
-                }
-                // was 0.1667 => 0.1667/52
-                if (hasNeighborOnFire && !vine.onFire && p.random(1) < 0.1667 * WEEK_FACTOR) {
-                    vine.onFire = true;
-                    vine.fireAge = 0;
+                    if (vine && !vine.onFire) // vine catch fire prob 0.1667
+                    {
+                        if (p.random(1) < 0.1667 * WEEK_FACTOR) {
+                            vine.onFire = true;
+                            vine.fireAge = 0;
+                        }
+                    }
+                } else if (isVine && vineLayer[i][j]) {
+                    // a vine is on fire
+                    if (plant && !plant.onFire) {
+                        // Possibly catch fire from vine to plant
+                        if (plant.type === "tree" && plant.state === "dead") {
+                            // auto-catch? or same 0.01 logic?
+                            plant.onFire = true;
+                            plant.fireAge = 0;
+                        } else if (plant.type === "tree" && plant.state === "tree") {
+                            if (p.random(1) < 0.33 * WEEK_FACTOR) {
+                                plant.onFire = true;
+                                plant.fireAge = 0;
+                            }
+                        } else if (plant.type === "flower" && plant.state === "meadow") {
+                            if (p.random(1) < 0.1 * WEEK_FACTOR) {
+                                plant.onFire = true;
+                                plant.fireAge = 0;
+                            }
+                        }
+                    }
+                    if (vine && !vine.onFire) // Possibly catch fire from vine to vine
+                    {
+                        if (p.random(1) < 0.1667 * WEEK_FACTOR) {
+                            vine.onFire = true;
+                            vine.fireAge = 0;
+                        }
+                    }
                 }
             }
         }
-        // Burning
+        // Age the fires
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
             let plant = plantLayer[i][j];
+            let vine = vineLayer[i][j];
             if (plant && plant.onFire) {
-                // was fireAge++ => fireAge += WEEK_FACTOR
                 plant.fireAge = (plant.fireAge || 0) + WEEK_FACTOR;
-                // if (plant.fireAge >= 2) => means 2 years
                 if (plant.fireAge >= 2) {
+                    // burn out => becomes DIRT, kill the plant
                     grid[i][j] = DIRT;
                     plantLayer[i][j] = null;
                 }
             }
-            let vine = vineLayer[i][j];
             if (vine && vine.onFire) {
                 vine.fireAge = (vine.fireAge || 0) + WEEK_FACTOR;
                 if (vine.fireAge >= 2) vineLayer[i][j] = null;
             }
         }
     }
-    function renderOverlays(p) {
+    function updateCharts() {
+        // Count categories
+        let counts = {
+            treeSeed: 0,
+            sapling: 0,
+            matureTree: 0,
+            flowerSeed: 0,
+            meadow: 0,
+            vine: 0
+        };
+        let sum = {
+            treeSeed: 0,
+            sapling: 0,
+            matureTree: 0,
+            flowerSeed: 0,
+            meadow: 0,
+            vine: 0
+        };
+        let count = {
+            treeSeed: 0,
+            sapling: 0,
+            matureTree: 0,
+            flowerSeed: 0,
+            meadow: 0,
+            vine: 0
+        };
         for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
-            let x = i * cellSize;
-            let y = j * cellSize;
             let plant = plantLayer[i][j];
             if (plant) {
+                if (plant.type === "tree") {
+                    if (plant.state === "seed") {
+                        counts.treeSeed++;
+                        sum.treeSeed += plant.age;
+                        count.treeSeed++;
+                    } else if (plant.state === "sapling") {
+                        counts.sapling++;
+                        sum.sapling += plant.age;
+                        count.sapling++;
+                    } else if (plant.state === "tree") {
+                        counts.matureTree++;
+                        sum.matureTree += plant.age;
+                        count.matureTree++;
+                    } else plant.state;
+                } else if (plant.type === "flower") {
+                    if (plant.state === "seed") {
+                        counts.flowerSeed++;
+                        sum.flowerSeed += plant.age;
+                        count.flowerSeed++;
+                    } else if (plant.state === "meadow") {
+                        counts.meadow++;
+                        sum.meadow += plant.age;
+                        count.meadow++;
+                    }
+                }
+            }
+            if (vineLayer[i][j]) {
+                counts.vine++;
+                sum.vine += vineLayer[i][j].age;
+                count.vine++;
+            }
+        }
+        // population chart
+        myChart.data.labels.push(simulationYears.toFixed(2));
+        myChart.data.datasets[0].data.push(counts.treeSeed);
+        myChart.data.datasets[1].data.push(counts.sapling);
+        myChart.data.datasets[2].data.push(counts.matureTree);
+        myChart.data.datasets[3].data.push(counts.flowerSeed);
+        myChart.data.datasets[4].data.push(counts.meadow);
+        myChart.data.datasets[5].data.push(counts.vine);
+        myChart.update();
+        // average age chart
+        function avg(s, c) {
+            return c ? s / c : 0;
+        }
+        let avgAges = {
+            treeSeed: avg(sum.treeSeed, count.treeSeed),
+            sapling: avg(sum.sapling, count.sapling),
+            matureTree: avg(sum.matureTree, count.matureTree),
+            flowerSeed: avg(sum.flowerSeed, count.flowerSeed),
+            meadow: avg(sum.meadow, count.meadow),
+            vine: avg(sum.vine, count.vine)
+        };
+        averageAgeChart.data.labels.push(simulationYears.toFixed(2));
+        averageAgeChart.data.datasets[0].data.push(avgAges.treeSeed);
+        averageAgeChart.data.datasets[1].data.push(avgAges.sapling);
+        averageAgeChart.data.datasets[2].data.push(avgAges.matureTree);
+        averageAgeChart.data.datasets[3].data.push(avgAges.flowerSeed);
+        averageAgeChart.data.datasets[4].data.push(avgAges.meadow);
+        averageAgeChart.data.datasets[5].data.push(avgAges.vine);
+        averageAgeChart.update();
+    }
+    function renderOverlays(p) {
+        for(let i = 0; i < cols; i++)for(let j = 0; j < rows; j++){
+            let x = i * cellSize, y = j * cellSize;
+            let plant = plantLayer[i][j];
+            if (plant) {
+                // fire on top?
                 if (plant.onFire) p.image(fireIcon, x, y, cellSize, cellSize);
                 else if (plant.type === "tree") {
                     if (plant.state === "seed") p.image(treeSeedIcon, x, y, cellSize, cellSize);
@@ -1489,18 +1534,66 @@ const sketch = (p)=>{
                 }
                 if (plant.bees) p.image(beeIcon, x + cellSize * 0.6, y, cellSize * 0.4, cellSize * 0.4);
             }
-            if (vineLayer[i][j]) {
-                if (vineLayer[i][j].onFire) p.image(fireIcon, x, y, cellSize, cellSize);
-                else if (plant) {
+            let vine = vineLayer[i][j];
+            if (vine) {
+                if (vine.onFire) p.image(fireIcon, x, y, cellSize, cellSize);
+                else // figure out which vine image to use
+                if (plant) {
                     if (plant.type === "tree") {
                         if (plant.state === "dead") p.image(deadTreeVineIcon, x, y, cellSize, cellSize);
                         else p.image(treeVineIcon, x, y, cellSize, cellSize);
                     } else if (plant.type === "flower" && plant.state === "meadow") p.image(meadowVineIcon, x, y, cellSize, cellSize);
                     else p.image(treeVineIcon, x, y, cellSize, cellSize);
-                } else p.image(treeVineIcon, x, y, cellSize, cellSize);
+                } else // vine with no plant
+                p.image(treeVineIcon, x, y, cellSize, cellSize);
             }
         }
     }
+    function drawTooltip(p) {
+        let simMouseX = (p.mouseX - panX) / zoomLevel;
+        let simMouseY = (p.mouseY - panY) / zoomLevel;
+        let hoverI = Math.floor(simMouseX / cellSize);
+        let hoverJ = Math.floor(simMouseY / cellSize);
+        if (hoverI < 0 || hoverI >= cols || hoverJ < 0 || hoverJ >= rows) return;
+        let terrain = grid[hoverI][hoverJ];
+        let plant = plantLayer[hoverI][hoverJ];
+        let info = "Terrain: " + terrain + "\n";
+        if (plant) {
+            info += `Plant: ${plant.type} (${plant.state})\n`;
+            info += `Age: ${plant.age.toFixed(2)} yrs\n`;
+            if (plant.vineExposure) info += `VineExposure: ${plant.vineExposure.toFixed(2)}\n`;
+            if (plant.deadAge) info += `Dead Age: ${plant.deadAge.toFixed(2)}\n`;
+            if (plant.onFire) info += `On Fire: ${plant.fireAge?.toFixed(2) ?? 0}\n`;
+            if (plant.bees) info += `Bees Timer: ${plant.bees.toFixed(2)}\n`;
+        }
+        let vine = vineLayer[hoverI][hoverJ];
+        if (vine) {
+            info += `Vine Age: ${vine.age.toFixed(2)}\n`;
+            if (vine.onFire) info += `Vine Fire Age: ${vine.fireAge?.toFixed(2) ?? 0}\n`;
+        }
+        // draw tooltip
+        p.push();
+        p.resetMatrix();
+        let lines = info.split("\n");
+        let w = 0;
+        lines.forEach((line)=>{
+            let tw = p.textWidth(line);
+            if (tw > w) w = tw;
+        });
+        let lineHeight = 12;
+        let tooltipH = lines.length * lineHeight + 10;
+        let tooltipX = p.mouseX + 10;
+        let tooltipY = p.mouseY + 10;
+        p.fill(255, 240);
+        p.stroke(0);
+        p.rect(tooltipX, tooltipY, w + 10, tooltipH, 5);
+        p.fill(0);
+        p.noStroke();
+        p.textAlign(p.LEFT, p.TOP);
+        p.text(info, tooltipX + 5, tooltipY + 5);
+        p.pop();
+    }
+    // tickRate input
     document.getElementById("tickInput")?.addEventListener("change", (e)=>{
         tickRate = parseFloat(e.target.value) || 1;
         tickInterval = 1 / tickRate;
@@ -1523,6 +1616,9 @@ window.restartSimulation = ()=>{
     myChart.data.labels = [];
     myChart.data.datasets.forEach((ds)=>ds.data = []);
     myChart.update();
+    averageAgeChart.data.labels = [];
+    averageAgeChart.data.datasets.forEach((ds)=>ds.data = []);
+    averageAgeChart.update();
 };
 
 },{"p5":"7Uk5U","chart.js/auto":"d8NN9","./icons/acorn.png":"8DcGY","./icons/water.png":"cHpyd","./icons/dirt.png":"6jRS3","./icons/rock.png":"1GjxS","./icons/grass.png":"4tWe1","./icons/sapling.png":"4MRTG","./icons/tree.png":"92U5z","./icons/dead-tree.png":"aLljn","./icons/flower-seed.png":"5q00m","./icons/meadow.png":"kXLmL","./icons/bee.png":"1NYvv","./icons/tree-vine.png":"2I15k","./icons/dead-tree-vine.png":"c6GZl","./icons/meadow-vine.png":"ad2kO","./icons/fire.png":"c5SqS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7Uk5U":[function(require,module,exports,__globalThis) {
